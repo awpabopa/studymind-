@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StudyMind AI - Homework Helper</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --surface2: #1c1c28;
+    --border: #2a2a3d;
+    --purple: #7f77dd;
+    --purple-light: #afa9ec;
+    --purple-dark: #534ab7;
+    --teal-light: #5dcaa5;
+    --text: #e8e8f2;
+    --text-muted: #6b6b88;
+    --text-dim: #3a3a52;
+    --danger: #f09595;
+    --danger-bg: rgba(240,149,149,0.1);
+  }
+  html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 15px; line-height: 1.6; }
+  body { display: flex; flex-direction: column; min-height: 100vh; }
+
+  /* ── LOGIN SCREEN ── */
+  #login-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 24px;
+  }
+
+  .login-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 36px 32px;
+    width: 100%;
+    max-width: 380px;
+  }
+
+  .login-logo {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, var(--purple), var(--teal-light));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    margin: 0 auto 18px;
+  }
+
+  .login-card h2 {
+    font-size: 22px;
+    font-weight: 600;
+    text-align: center;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+
+  .login-card p {
+    font-size: 13px;
+    color: var(--text-muted);
+    text-align: center;
+    margin-bottom: 28px;
+  }
+
+  .login-tabs {
+    display: flex;
+    background: var(--surface2);
+    border-radius: 10px;
+    padding: 4px;
+    margin-bottom: 24px;
+    gap: 4px;
+  }
+
+  .login-tab {
+    flex: 1;
+    font-size: 13px;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+    padding: 8px;
+    border-radius: 7px;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .login-tab.active { background: var(--purple); color: #fff; }
+
+  .field { margin-bottom: 16px; }
+  .field label { display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px; font-weight: 500; letter-spacing: 0.3px; }
+
+  .field input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 11px 14px;
+    font-size: 14px;
+    font-family: 'DM Sans', sans-serif;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .field input:focus { border-color: var(--purple); }
+  .field input::placeholder { color: var(--text-dim); }
+
+  .pin-row { display: flex; gap: 10px; }
+  .pin-box {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 11px 0;
+    font-size: 20px;
+    font-family: 'Space Mono', monospace;
+    color: var(--text);
+    text-align: center;
+    outline: none;
+    transition: border-color 0.2s;
+    width: 0;
+  }
+  .pin-box:focus { border-color: var(--purple); }
+
+  .error-msg {
+    display: none;
+    background: var(--danger-bg);
+    border: 1px solid rgba(240,149,149,0.25);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 13px;
+    color: var(--danger);
+    margin-bottom: 16px;
+    text-align: center;
+  }
+  .error-msg.visible { display: block; }
+
+  .login-btn {
+    width: 100%;
+    padding: 13px;
+    background: var(--purple);
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 600;
+    color: #fff;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 4px;
+  }
+  .login-btn:hover { background: var(--purple-dark); }
+
+  .login-note {
+    font-size: 11px;
+    color: var(--text-dim);
+    text-align: center;
+    margin-top: 16px;
+    line-height: 1.5;
+  }
+
+  /* ── APP SCREEN ── */
+  #app-screen { display: none; flex-direction: column; min-height: 100vh; }
+  #app-screen.visible { display: flex; }
+
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .logo { width: 36px; height: 36px; border-radius: 10px; background: linear-gradient(135deg, var(--purple), var(--teal-light)); display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+  .brand { flex: 1; }
+  .brand h1 { font-size: 16px; font-weight: 600; color: var(--text); }
+  .brand p { font-size: 12px; color: var(--text-muted); }
+
+  .header-right { display: flex; align-items: center; gap: 8px; }
+  .mode-tabs { display: flex; gap: 5px; }
+  .tab { font-size: 12px; font-family: 'DM Sans', sans-serif; font-weight: 500; padding: 5px 12px; border-radius: 20px; border: 1px solid var(--border); background: transparent; color: var(--text-muted); cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+  .tab:hover { border-color: var(--purple); color: var(--purple-light); }
+  .tab.active { background: var(--purple); border-color: var(--purple); color: #fff; }
+
+  .user-chip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 5px 12px 5px 6px;
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+  .user-avatar {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--purple-dark);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 700;
+    color: #fff;
+    flex-shrink: 0;
+  }
+  .logout-btn { background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 12px; padding: 2px 6px; border-radius: 4px; transition: color 0.15s; margin-left: 2px; }
+  .logout-btn:hover { color: var(--danger); }
+
+  main { flex: 1; display: flex; flex-direction: column; max-width: 780px; width: 100%; margin: 0 auto; padding: 0 16px; }
+
+  #chat { flex: 1; padding: 24px 0 16px; display: flex; flex-direction: column; gap: 18px; overflow-y: auto; }
+  .msg { display: flex; gap: 10px; align-items: flex-start; animation: fadeUp 0.25s ease; }
+  .msg.user { flex-direction: row-reverse; }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  .avatar { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; flex-shrink: 0; margin-top: 3px; }
+  .ai-av { background: var(--surface2); border: 1px solid var(--purple-dark); color: var(--purple-light); font-family: 'Space Mono', monospace; }
+  .user-av { background: var(--purple-dark); color: #fff; }
+
+  .bubble { max-width: 75%; padding: 12px 16px; border-radius: 16px; font-size: 14px; line-height: 1.65; white-space: pre-wrap; }
+  .msg.ai .bubble { background: var(--surface2); border: 1px solid var(--border); color: #d0d0e8; border-top-left-radius: 4px; }
+  .msg.user .bubble { background: var(--purple); color: #fff; border-top-right-radius: 4px; }
+
+  .img-preview { max-width: 75%; margin-top: 6px; }
+  .img-preview img { max-width: 100%; border-radius: 10px; border: 1px solid var(--border); display: block; }
+  .msg.user .img-preview { margin-left: auto; }
+
+  .typing-dots { display: flex; gap: 5px; align-items: center; padding: 4px 2px; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--purple); animation: bounce 1.3s infinite; }
+  .dot:nth-child(2) { animation-delay: 0.2s; }
+  .dot:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes bounce { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-7px)} }
+
+  #quick-prompts { display: flex; gap: 8px; flex-wrap: wrap; padding: 8px 0 14px; }
+  .qp { font-size: 12px; font-family: 'DM Sans', sans-serif; padding: 6px 13px; border-radius: 20px; border: 1px solid var(--border); background: var(--surface); color: var(--text-muted); cursor: pointer; transition: all 0.15s; }
+  .qp:hover { border-color: var(--teal-light); color: var(--teal-light); }
+
+  #img-staging { display: none; padding: 10px 16px 0; }
+  #img-staging.visible { display: flex; align-items: flex-start; gap: 10px; }
+  #staged-img { max-height: 100px; border-radius: 8px; border: 1px solid var(--border); }
+  #remove-img { background: rgba(255,255,255,0.08); border: none; color: var(--text-muted); border-radius: 50%; width: 22px; height: 22px; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; margin-top: 2px; flex-shrink: 0; }
+  #remove-img:hover { background: var(--danger-bg); color: var(--danger); }
+
+  #input-bar { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; display: flex; flex-direction: column; margin-bottom: 20px; transition: border-color 0.2s; overflow: hidden; }
+  #input-bar:focus-within { border-color: var(--purple-dark); }
+  #input-row { display: flex; align-items: flex-end; gap: 10px; padding: 10px 10px 10px 16px; }
+  #user-input { flex: 1; background: transparent; border: none; outline: none; font-size: 14px; font-family: 'DM Sans', sans-serif; color: var(--text); resize: none; min-height: 24px; max-height: 140px; line-height: 1.5; }
+  #user-input::placeholder { color: var(--text-dim); }
+
+  .icon-btn { width: 36px; height: 36px; border-radius: 9px; background: var(--surface2); border: 1px solid var(--border); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; flex-shrink: 0; }
+  .icon-btn:hover { border-color: var(--purple); }
+  .icon-btn svg { width: 16px; height: 16px; fill: none; stroke: var(--text-muted); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .icon-btn:hover svg { stroke: var(--purple-light); }
+
+  #send-btn { width: 36px; height: 36px; border-radius: 9px; background: var(--purple); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; flex-shrink: 0; }
+  #send-btn:hover { background: var(--purple-dark); }
+  #send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  #send-btn svg { width: 15px; height: 15px; fill: none; stroke: #fff; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+
+  #upload-hint { font-size: 11px; color: var(--text-dim); padding: 0 16px 10px; }
+
+  .mode-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; padding: 3px 10px; border-radius: 20px; background: rgba(127,119,221,0.12); color: var(--purple-light); border: 1px solid rgba(127,119,221,0.25); margin-bottom: 6px; }
+
+  #file-input { display: none; }
+
+  @media (max-width: 600px) { .mode-tabs { display: none; } .bubble { max-width: 88%; } }
+</style>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">✦</div>
+    <h2>StudyMind AI</h2>
+    <p>Sign in or create an account to get started</p>
+
+    <div class="login-tabs">
+      <button class="login-tab active" onclick="switchAuthTab('login', this)">Sign in</button>
+      <button class="login-tab" onclick="switchAuthTab('register', this)">Create account</button>
+    </div>
+
+    <div class="field">
+      <label>USERNAME</label>
+      <input type="text" id="auth-username" placeholder="e.g. alex123" autocomplete="username" maxlength="20"/>
+    </div>
+
+    <div class="field">
+      <label>4-DIGIT PIN</label>
+      <div class="pin-row">
+        <input class="pin-box" type="password" inputmode="numeric" maxlength="1" id="p1" oninput="pinMove(this,'p2')" onkeydown="pinBack(event,this,'')"/>
+        <input class="pin-box" type="password" inputmode="numeric" maxlength="1" id="p2" oninput="pinMove(this,'p3')" onkeydown="pinBack(event,this,'p1')"/>
+        <input class="pin-box" type="password" inputmode="numeric" maxlength="1" id="p3" oninput="pinMove(this,'p4')" onkeydown="pinBack(event,this,'p2')"/>
+        <input class="pin-box" type="password" inputmode="numeric" maxlength="1" id="p4" oninput="pinMove(this,'')"  onkeydown="pinBack(event,this,'p3')"/>
+      </div>
+    </div>
+
+    <div class="error-msg" id="auth-error"></div>
+
+    <button class="login-btn" id="auth-btn" onclick="handleAuth()">Sign in</button>
+
+    <p class="login-note">Your info is saved only on this device.<br>Don't share your PIN with anyone.</p>
+  </div>
+</div>
+
+<!-- APP SCREEN -->
+<div id="app-screen">
+  <header>
+    <div class="logo">✦</div>
+    <div class="brand">
+      <h1>StudyMind AI</h1>
+      <p>Your personal homework helper</p>
+    </div>
+    <div class="header-right">
+      <div class="mode-tabs">
+        <button class="tab active" onclick="setMode('homework', this)">Homework</button>
+        <button class="tab" onclick="setMode('explain', this)">Explain</button>
+        <button class="tab" onclick="setMode('quiz', this)">Quiz me</button>
+      </div>
+      <div class="user-chip">
+        <div class="user-avatar" id="user-initials">?</div>
+        <span id="user-name-display">User</span>
+        <button class="logout-btn" onclick="logout()" title="Sign out">✕</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div id="chat"></div>
+
+    <div id="quick-prompts">
+      <button class="qp" onclick="quickSend('Help me solve a math problem step by step')">Math problem</button>
+      <button class="qp" onclick="quickSend('Explain a concept in simple terms')">Explain a concept</button>
+      <button class="qp" onclick="quickSend('Help me write an essay outline')">Essay outline</button>
+      <button class="qp" onclick="quickSend('Help me study for a test')">Study help</button>
+      <button class="qp" onclick="quickSend('Check my grammar and writing')">Writing help</button>
+    </div>
+
+    <div id="input-bar">
+      <div id="img-staging">
+        <img id="staged-img" src="" alt="staged"/>
+        <button id="remove-img" onclick="removeImage()" title="Remove image">✕</button>
+      </div>
+      <div id="input-row">
+        <textarea id="user-input" placeholder="Ask a question or upload a photo..." rows="1"
+          onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+        <button class="icon-btn" onclick="document.getElementById('file-input').click()" title="Upload photo">
+          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        </button>
+        <button id="send-btn" onclick="sendMessage()">
+          <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </button>
+      </div>
+      <div id="upload-hint">📷 Tap the image icon to upload a photo of your worksheet</div>
+    </div>
+
+    <input type="file" id="file-input" accept="image/*" capture="environment" onchange="handleImageUpload(event)">
+  </main>
+</div>
+
+<script>
+// ── AUTH STATE ──
+let authMode = 'login';
+let currentUser = null;
+
+function switchAuthTab(mode, btn) {
+  authMode = mode;
+  document.querySelectorAll('.login-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('auth-btn').textContent = mode === 'login' ? 'Sign in' : 'Create account';
+  clearError();
+}
+
+function getPin() {
+  return ['p1','p2','p3','p4'].map(id => document.getElementById(id).value).join('');
+}
+
+function pinMove(el, nextId) {
+  if (el.value && nextId) document.getElementById(nextId).focus();
+}
+
+function pinBack(e, el, prevId) {
+  if (e.key === 'Backspace' && !el.value && prevId) document.getElementById(prevId).focus();
+}
+
+function showError(msg) {
+  const el = document.getElementById('auth-error');
+  el.textContent = msg;
+  el.classList.add('visible');
+}
+
+function clearError() {
+  document.getElementById('auth-error').classList.remove('visible');
+}
+
+function getUsers() {
+  try { return JSON.parse(localStorage.getItem('studymind_users') || '{}'); } catch { return {}; }
+}
+
+function saveUsers(users) {
+  localStorage.setItem('studymind_users', JSON.stringify(users));
+}
+
+function handleAuth() {
+  clearError();
+  const username = document.getElementById('auth-username').value.trim().toLowerCase();
+  const pin = getPin();
+
+  if (!username) { showError('Please enter a username.'); return; }
+  if (username.length < 3) { showError('Username must be at least 3 characters.'); return; }
+  if (pin.length !== 4) { showError('Please enter your full 4-digit PIN.'); return; }
+  if (!/^\d{4}$/.test(pin)) { showError('PIN must be 4 numbers only.'); return; }
+
+  const users = getUsers();
+
+  if (authMode === 'register') {
+    if (users[username]) { showError('That username is already taken. Try another.'); return; }
+    users[username] = { pin, created: Date.now() };
+    saveUsers(users);
+    loginSuccess(username);
+  } else {
+    if (!users[username]) { showError('Username not found. Create an account first.'); return; }
+    if (users[username].pin !== pin) { showError('Wrong PIN. Please try again.'); return; }
+    loginSuccess(username);
+  }
+}
+
+function loginSuccess(username) {
+  currentUser = username;
+  localStorage.setItem('studymind_session', username);
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app-screen').classList.add('visible');
+  document.getElementById('user-name-display').textContent = username;
+  document.getElementById('user-initials').textContent = username[0].toUpperCase();
+  startChat();
+}
+
+function logout() {
+  currentUser = null;
+  localStorage.removeItem('studymind_session');
+  history = [];
+  document.getElementById('app-screen').classList.remove('visible');
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('auth-username').value = '';
+  ['p1','p2','p3','p4'].forEach(id => document.getElementById(id).value = '');
+  clearError();
+}
+
+function checkSession() {
+  const saved = localStorage.getItem('studymind_session');
+  if (saved && getUsers()[saved]) {
+    loginSuccess(saved);
+  }
+}
+
+// ── CHAT STATE ──
+let mode = 'homework';
+let history = [];
+let loading = false;
+let stagedImageBase64 = null;
+let stagedImageType = null;
+
+const modeConfig = {
+  homework: {
+    label: '✦ Homework mode',
+    system: 'You are StudyMind, a friendly and encouraging AI homework helper for students. Always break down problems step by step. Be clear, concise, and educational. If it\'s a math problem, show all steps. If an image is provided, carefully read and solve whatever is shown.'
+  },
+  explain: {
+    label: '✦ Explain mode',
+    system: 'You are StudyMind in Explain mode. When a student asks about any topic or concept, explain it clearly using simple language, real-world analogies, and examples. Start simple then go deeper. Be encouraging and patient.'
+  },
+  quiz: {
+    label: '✦ Quiz mode',
+    system: 'You are StudyMind in Quiz mode. Ask the student one question at a time on their chosen topic. After they answer, give warm encouraging feedback, reveal the correct answer with explanation, then ask if they want another. Keep it fun!'
+  }
+};
+
+function startChat() {
+  const chat = document.getElementById('chat');
+  chat.innerHTML = '';
+  history = [];
+  addMsg('ai', `Welcome back, ${currentUser}! 👋 I'm StudyMind — your AI study helper. Ask me anything or upload a photo of your homework and I'll solve it step by step!`, modeConfig[mode].label);
+}
+
+function setMode(m, btn) {
+  mode = m;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  history = [];
+  const msgs = {
+    homework: "Switched to Homework Help! Ask me any question or upload a photo of your work.",
+    explain: "Switched to Explain mode! Tell me any concept and I'll break it down simply.",
+    quiz: "Quiz mode on! Tell me a subject and I'll start testing you."
+  };
+  addMsg('ai', msgs[m], modeConfig[m].label);
+}
+
+function handleImageUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const result = e.target.result;
+    stagedImageBase64 = result.split(',')[1];
+    stagedImageType = file.type;
+    document.getElementById('staged-img').src = result;
+    document.getElementById('img-staging').classList.add('visible');
+    document.getElementById('upload-hint').style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+  event.target.value = '';
+}
+
+function removeImage() {
+  stagedImageBase64 = null;
+  stagedImageType = null;
+  document.getElementById('staged-img').src = '';
+  document.getElementById('img-staging').classList.remove('visible');
+  document.getElementById('upload-hint').style.display = 'block';
+}
+
+function addMsg(role, text, badge) {
+  const chat = document.getElementById('chat');
+  const div = document.createElement('div');
+  div.className = `msg ${role}`;
+  const av = document.createElement('div');
+  av.className = `avatar ${role === 'user' ? 'user-av' : 'ai-av'}`;
+  av.textContent = role === 'user' ? (currentUser ? currentUser[0].toUpperCase() : 'U') : 'AI';
+  const wrap = document.createElement('div');
+  wrap.style.maxWidth = '75%';
+  if (badge && role === 'ai') {
+    const b = document.createElement('div');
+    b.className = 'mode-badge';
+    b.textContent = badge;
+    wrap.appendChild(b);
+  }
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble';
+  bubble.style.maxWidth = '100%';
+  bubble.textContent = text;
+  wrap.appendChild(bubble);
+  div.appendChild(av);
+  div.appendChild(wrap);
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function addImageMsg(role, src) {
+  const chat = document.getElementById('chat');
+  const div = document.createElement('div');
+  div.className = `msg ${role}`;
+  const av = document.createElement('div');
+  av.className = `avatar ${role === 'user' ? 'user-av' : 'ai-av'}`;
+  av.textContent = role === 'user' ? (currentUser ? currentUser[0].toUpperCase() : 'U') : 'AI';
+  const imgWrap = document.createElement('div');
+  imgWrap.className = 'img-preview';
+  const img = document.createElement('img');
+  img.src = src;
+  img.alt = 'Uploaded homework';
+  imgWrap.appendChild(img);
+  div.appendChild(av);
+  div.appendChild(imgWrap);
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function showTyping() {
+  const chat = document.getElementById('chat');
+  const div = document.createElement('div');
+  div.className = 'msg ai';
+  div.id = 'typing';
+  const av = document.createElement('div');
+  av.className = 'avatar ai-av';
+  av.textContent = 'AI';
+  const wrap = document.createElement('div');
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble';
+  bubble.innerHTML = '<div class="typing-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>';
+  wrap.appendChild(bubble);
+  div.appendChild(av);
+  div.appendChild(wrap);
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function removeTyping() {
+  const t = document.getElementById('typing');
+  if (t) t.remove();
+}
+
+function quickSend(text) {
+  document.getElementById('user-input').value = text;
+  sendMessage();
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 140) + 'px';
+}
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+}
+
+async function sendMessage() {
+  if (loading) return;
+  const input = document.getElementById('user-input');
+  const text = input.value.trim();
+  const hasImage = !!stagedImageBase64;
+  if (!text && !hasImage) return;
+
+  input.value = '';
+  input.style.height = 'auto';
+
+  if (hasImage) addImageMsg('user', `data:${stagedImageType};base64,${stagedImageBase64}`);
+  if (text) addMsg('user', text);
+
+  let userContent;
+  if (hasImage) {
+    userContent = [
+      { type: 'image', source: { type: 'base64', media_type: stagedImageType, data: stagedImageBase64 } },
+      { type: 'text', text: text || "Please read this image and help me solve or understand whatever is shown. If it's a math problem, solve it step by step." }
+    ];
+  } else {
+    userContent = text;
+  }
+
+  history.push({ role: 'user', content: userContent });
+  if (hasImage) removeImage();
+
+  loading = true;
+  document.getElementById('send-btn').disabled = true;
+  showTyping();
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: modeConfig[mode].system,
+        messages: history
+      })
+    });
+    const data = await res.json();
+    const reply = data.content?.[0]?.text || "Sorry, I couldn't respond. Please try again.";
+    removeTyping();
+    addMsg('ai', reply);
+    history.push({ role: 'assistant', content: reply });
+  } catch (err) {
+    removeTyping();
+    addMsg('ai', 'Something went wrong. Check your connection and try again.');
+  }
+
+  loading = false;
+  document.getElementById('send-btn').disabled = false;
+}
+
+// Check for existing session on load
+checkSession();
+</script>
+</body>
+</html>
