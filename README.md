@@ -25,5 +25,4 @@ Type a question or upload a photo of your homework and the AI will help you solv
 - HTML, CSS, JavaScript
 - Claude AI (Anthropic)
 
-## Author
-Your name here
+
