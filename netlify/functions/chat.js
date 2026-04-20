@@ -18,22 +18,49 @@ exports.handler = async function(event, context) {
   try {
     const body = JSON.parse(event.body);
 
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': process.env.ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01'
-      },
-      body: JSON.stringify({
-        model: 'claude-3-5-sonnet-20241022',
-        max_tokens: 1000,
-        system: body.system,
-        messages: body.messages
-      })
-    });
+    const modelsToTry = [
+      'claude-sonnet-4-20250514',
+      'claude-3-5-sonnet-20241022',
+      'claude-3-5-haiku-20241022',
+      'claude-3-haiku-20240307',
+      'claude-3-sonnet-20240229',
+      'claude-3-opus-20240229'
+    ];
 
-    const data = await response.json();
+    let lastError = null;
+
+    for (const model of modelsToTry) {
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': process.env.ANTHROPIC_API_KEY,
+          'anthropic-version': '2023-06-01'
+        },
+        body: JSON.stringify({
+          model: model,
+          max_tokens: 1000,
+          system: body.system,
+          messages: body.messages
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.type === 'error' && data.error.type === 'not_found_error') {
+        lastError = data;
+        continue;
+      }
+
+      return {
+        statusCode: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        },
+        body: JSON.stringify(data)
+      };
+    }
 
     return {
       statusCode: 200,
@@ -41,8 +68,9 @@ exports.handler = async function(event, context) {
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*'
       },
-      body: JSON.stringify(data)
+      body: JSON.stringify(lastError)
     };
+
   } catch (err) {
     return {
       statusCode: 500,
