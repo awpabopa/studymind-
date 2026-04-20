@@ -1,3 +1,4 @@
+
 exports.handler = async function(event, context) {
   if (event.httpMethod === 'OPTIONS') {
     return {
@@ -18,49 +19,47 @@ exports.handler = async function(event, context) {
   try {
     const body = JSON.parse(event.body);
 
-    const modelsToTry = [
-      'claude-sonnet-4-20250514',
-      'claude-3-5-sonnet-20241022',
-      'claude-3-5-haiku-20241022',
-      'claude-3-haiku-20240307',
-      'claude-3-sonnet-20240229',
-      'claude-3-opus-20240229'
-    ];
-
-    let lastError = null;
-
-    for (const model of modelsToTry) {
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': process.env.ANTHROPIC_API_KEY,
-          'anthropic-version': '2023-06-01'
-        },
-        body: JSON.stringify({
-          model: model,
-          max_tokens: 1000,
-          system: body.system,
-          messages: body.messages
-        })
-      });
-
-      const data = await response.json();
-
-      if (data.type === 'error' && data.error.type === 'not_found_error') {
-        lastError = data;
-        continue;
+    // First fetch the list of available models
+    const modelsRes = await fetch('https://api.anthropic.com/v1/models', {
+      method: 'GET',
+      headers: {
+        'x-api-key': process.env.ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01'
       }
+    });
 
+    const modelsData = await modelsRes.json();
+    
+    // Get the first available model id
+    let modelId = null;
+    if (modelsData.data && modelsData.data.length > 0) {
+      modelId = modelsData.data[0].id;
+    }
+
+    if (!modelId) {
       return {
         statusCode: 200,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*'
-        },
-        body: JSON.stringify(data)
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+        body: JSON.stringify({ debug: 'no models found', modelsData })
       };
     }
+
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': process.env.ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: modelId,
+        max_tokens: 1000,
+        system: body.system,
+        messages: body.messages
+      })
+    });
+
+    const data = await response.json();
 
     return {
       statusCode: 200,
@@ -68,7 +67,7 @@ exports.handler = async function(event, context) {
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*'
       },
-      body: JSON.stringify(lastError)
+      body: JSON.stringify(data)
     };
 
   } catch (err) {
